@@ -364,6 +364,48 @@ class InventoryService extends ChangeNotifier {
     });
     notifyListeners();
   }
+
+  Future<void> createVehicle(
+    String plate,
+    String model,
+    String driver,
+    int capacity,
+    String status,
+  ) async {
+    await _firestore.collection('vehicles').add({
+      'plate': plate,
+      'model': model,
+      'driver': driver,
+      'capacity': capacity,
+      'status': status,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    notifyListeners();
+  }
+
+  Future<void> updateVehicle(
+    String vehicleId,
+    String plate,
+    String model,
+    String driver,
+    int capacity,
+    String status,
+  ) async {
+    await _firestore.collection('vehicles').doc(vehicleId).update({
+      'plate': plate,
+      'model': model,
+      'driver': driver,
+      'capacity': capacity,
+      'status': status,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    notifyListeners();
+  }
+
+  Future<void> deleteVehicle(String vehicleId) async {
+    await _firestore.collection('vehicles').doc(vehicleId).delete();
+    notifyListeners();
+  }
 }
 
 
