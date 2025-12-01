@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/item.dart';
 import '../models/reservation.dart';
+import '../models/vehicle.dart';
 import 'package:uuid/uuid.dart';
 
 /// Firestore-backed inventory service.
@@ -13,8 +14,10 @@ class InventoryService extends ChangeNotifier {
 
   final List<Item> _items = [];
   final List<Reservation> _reservations = [];
+  final List<Vehicle> _vehicles = [];
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _itemsSub;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _resSub;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _vehiclesSub;
 
   Map<String, double> typeRates = {
     'mesa': 10.0,
@@ -25,15 +28,18 @@ class InventoryService extends ChangeNotifier {
 
   List<Item> get items => List.unmodifiable(_items);
   List<Reservation> get reservations => List.unmodifiable(_reservations);
+  List<Vehicle> get vehicles => List.unmodifiable(_vehicles);
 
   InventoryService() {
     _listenItems();
     _listenReservations();
+    _listenVehicles();
   }
 
   void dispose() {
     _itemsSub?.cancel();
     _resSub?.cancel();
+    _vehiclesSub?.cancel();
     super.dispose();
   }
 
@@ -301,5 +307,63 @@ class InventoryService extends ChangeNotifier {
     else item.reservations[key] = next;
     notifyListeners();
   }
+
+  // Vehicle management
+  void _listenVehicles() {
+    _vehiclesSub = _firestore.collection('vehicles').snapshots().listen((snap) {
+      _vehicles.clear();
+      for (final doc in snap.docs) {
+        try {
+          final vehicle = Vehicle.fromJson(doc.data(), doc.id);
+          _vehicles.add(vehicle);
+        } catch (_) {}
+      }
+      notifyListeners();
+    });
+  }
+
+  Vehicle? findVehicleById(String id) {
+    try {
+      return _vehicles.firstWhere((v) => v.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Seed the `vehicles` collection with example data if empty
+  Future<void> seedDefaultVehicles() async {
+    final snap = await _firestore.collection('vehicles').limit(1).get();
+    if (snap.docs.isNotEmpty) return; // already have data
+
+    final samples = [
+      {'plate': 'ABC-1234', 'model': 'Furgón Ford Transit', 'driver': 'Juan Pérez', 'status': 'available', 'capacity': 100},
+      {'plate': 'XYZ-5678', 'model': 'Camión Hino 300', 'driver': 'Carlos López', 'status': 'available', 'capacity': 200},
+      {'plate': 'DEF-9101', 'model': 'Furgón Renault Master', 'driver': 'Miguel Rodríguez', 'status': 'available', 'capacity': 80},
+    ];
+
+    for (final s in samples) {
+      await _firestore.collection('vehicles').add({
+        ...s,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  Future<void> assignVehicleToReservation(String reservationId, String vehicleId) async {
+    await _firestore.collection('reservations').doc(reservationId).update({
+      'assignedVehicleId': vehicleId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    notifyListeners();
+  }
+
+  Future<void> rescheduleReservation(String reservationId, DateTime newEnd) async {
+    await _firestore.collection('reservations').doc(reservationId).update({
+      'end': Timestamp.fromDate(newEnd),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    notifyListeners();
+  }
 }
+
 

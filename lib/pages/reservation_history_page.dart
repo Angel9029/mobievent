@@ -110,6 +110,9 @@ class _ReservationHistoryPageState extends State<ReservationHistoryPage> {
                     final isActive = res.end.isAfter(now);
                     final item = Provider.of<InventoryService>(context, listen: false).findById(res.itemId);
                     final title = item != null ? item.name : res.itemId;
+                    final daysUntilEnd = res.end.difference(now).inDays;
+                    final canReschedule = isActive && daysUntilEnd >= 7; // Must reschedule at least 7 days before
+                    
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       child: ListTile(
@@ -121,12 +124,33 @@ class _ReservationHistoryPageState extends State<ReservationHistoryPage> {
                           '${res.totalPrice != null ? ' | Total: \$${res.totalPrice!.toStringAsFixed(2)}' : ''}',
                         ),
                         trailing: isActive
-                            ? ElevatedButton(
-                                onPressed: () => _cancelReservation(context, res.id),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                            ? SizedBox(
+                                width: 200,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    if (canReschedule)
+                                      Flexible(
+                                        child: ElevatedButton(
+                                          onPressed: () => _showRescheduleModal(context, res, now),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.blue,
+                                          ),
+                                          child: const Text('Reprogramar'),
+                                        ),
+                                      ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: ElevatedButton(
+                                        onPressed: () => _cancelReservation(context, res.id),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        child: const Text('Cancelar'),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: const Text('Cancelar'),
                               )
                             : null,
                       ),
@@ -162,6 +186,72 @@ class _ReservationHistoryPageState extends State<ReservationHistoryPage> {
             child: const Text('Sí, Cancelar'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showRescheduleModal(BuildContext context, Reservation res, DateTime now) {
+    DateTime? selectedDate = res.end.add(const Duration(days: 1)); // Default to +1 day
+    final minDate = now.add(const Duration(days: 7)); // Must be at least 7 days from now
+    final maxDate = res.end.add(const Duration(days: 30)); // Can extend up to 30 days
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text('Reprogramar Entrega'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Fecha actual: ${res.end.toString().split(' ')[0]}'),
+              const SizedBox(height: 16),
+              Text('Nueva fecha: ${selectedDate?.toString().split(' ')[0] ?? "Seleccionar"}'),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate ?? res.end,
+                    firstDate: minDate,
+                    lastDate: maxDate,
+                  );
+                  if (picked != null) {
+                    setState(() => selectedDate = picked);
+                  }
+                },
+                child: const Text('Seleccionar fecha'),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Nota: Debe ser al menos 7 días antes de la entrega',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: selectedDate != null
+                  ? () async {
+                      final inv = Provider.of<InventoryService>(context, listen: false);
+                      await inv.rescheduleReservation(res.id, selectedDate!);
+                      if (context.mounted) {
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Entrega reprogramada para ${selectedDate!.toString().split(' ')[0]}'),
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+              child: const Text('Confirmar'),
+            ),
+          ],
+        ),
       ),
     );
   }

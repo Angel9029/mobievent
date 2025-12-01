@@ -13,6 +13,9 @@ import 'pages/app_shell_admin.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // Seed vehicles on startup
+  final invService = InventoryService();
+  await invService.seedDefaultVehicles();
   runApp(const MainApp());
 }
 
