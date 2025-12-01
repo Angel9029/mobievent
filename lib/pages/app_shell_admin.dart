@@ -30,7 +30,7 @@ class _AppShellAdminState extends State<AppShellAdmin> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.manage_search), label: 'Gestionar'),
+          BottomNavigationBarItem(icon: Icon(Icons.manage_search), label: 'Gestionar', backgroundColor: Colors.blue),
           BottomNavigationBarItem(icon: Icon(Icons.trending_up), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.local_shipping), label: 'Flota'),
           BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Configuración'),
