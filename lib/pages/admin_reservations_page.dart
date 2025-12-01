@@ -17,11 +17,15 @@ class AdminReservationsPage extends StatelessWidget {
         itemCount: all.length,
         itemBuilder: (ctx, i) {
           final r = all[i];
+          // Resolve item name from inventory cache
+          final item = inv.findById(r.itemId);
+          final itemName = item?.name ?? r.itemId;
+          
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
             child: ListTile(
-              title: Text('Item: ${r.itemId} • Qty: ${r.qty}'),
-              subtitle: Text('${r.start.toIso8601String().split('T').first} -> ${r.end.toIso8601String().split('T').first} • Usuario: ${r.userId} • Estado: ${r.status}'),
+              title: Text('$itemName • Cantidad: ${r.qty}'),
+              subtitle: Text('${r.start.toIso8601String().split('T').first} → ${r.end.toIso8601String().split('T').first} • Precio total: \$${(r.totalPrice ?? 0).toStringAsFixed(2)} • Estado: ${r.status}'),
               trailing: PopupMenuButton<String>(onSelected: (v) {
                 if (v == 'cancel') {
                   inv.cancelReservation(r.id);

@@ -9,6 +9,22 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  Future<Map<String, String>> _resolveReservationDetails(String itemId, String userId) async {
+    try {
+      // Fetch item name
+      final itemDoc = await FirebaseFirestore.instance.collection('items').doc(itemId).get();
+      final itemName = itemDoc.exists ? (itemDoc['name'] as String?) ?? 'Producto no encontrado' : 'Producto eliminado';
+
+      // Fetch user email
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final userEmail = userDoc.exists ? (userDoc['email'] as String?) ?? (userDoc['fullName'] as String?) ?? 'Usuario no encontrado' : 'Usuario eliminado';
+
+      return {'itemName': itemName, 'userEmail': userEmail};
+    } catch (e) {
+      return {'itemName': 'Error', 'userEmail': 'Error'};
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,12 +91,23 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     itemBuilder: (context, index) {
                       final doc = reservations[index];
                       final data = doc.data() as Map<String, dynamic>;
-                      return Card(
-                        child: ListTile(
-                          title: Text('${data['itemId']}'),
-                          subtitle: Text('Usuario: ${data['userId']}\nCantidad: ${data['qty']}'),
-                          trailing: _StatusBadge(status: data['status'] ?? 'active'),
+                      return FutureBuilder<Map<String, String>>(
+                        future: _resolveReservationDetails(
+                          data['itemId'] as String,
+                          data['userId'] as String,
                         ),
+                        builder: (context, snapshot) {
+                          final itemName = snapshot.data?['itemName'] ?? 'Cargando...';
+                          final userEmail = snapshot.data?['userEmail'] ?? 'Cargando...';
+                          
+                          return Card(
+                            child: ListTile(
+                              title: Text(itemName),
+                              subtitle: Text('Usuario: $userEmail\nCantidad: ${data['qty']} • \$${(data['totalPrice'] as num?)?.toStringAsFixed(2) ?? 'N/A'}'),
+                              trailing: _StatusBadge(status: data['status'] ?? 'active'),
+                            ),
+                          );
+                        },
                       );
                     },
                   ),

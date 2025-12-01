@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../models/item.dart';
 import '../services/inventory_service.dart';
+import '../services/transport_service.dart';
 import '../services/cart_service.dart';
 import '../components/availability_calendar.dart';
 
@@ -38,7 +39,14 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
     final isAdmin = auth.currentUser?.isAdmin ?? false;
     final available = inv.availableForRange(widget.item, _start, _end);
     final days = _end.difference(_start).inDays + 1;
-    final price = inv.priceFor(widget.item, days) * _qty;
+    final pricePerDay = widget.item.pricePerDay > 0.0 ? widget.item.pricePerDay : (inv.typeRates[widget.item.type] ?? 0.0);
+    final price = pricePerDay * days * _qty;
+    final transportService = Provider.of<TransportService>(context, listen: false);
+    double transportCost = 0;
+    if (!_pickup && _distanceKm != null) {
+      transportCost = transportService.estimateCost(_distanceKm!);
+    }
+    final totalPrice = price + transportCost;
     return Scaffold(
       appBar: AppBar(title: Text(widget.item.name)),
       body: Padding(
@@ -97,7 +105,7 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
               ]),
             ),
           const SizedBox(height: 8),
-          Text('Días: $days • Precio total estimado: \$${price.toStringAsFixed(2)}'),
+          Text('Días: $days • Precio: \$${price.toStringAsFixed(2)}${!_pickup ? ' • Transporte: \$${transportCost.toStringAsFixed(2)}' : ''} • Total: \$${totalPrice.toStringAsFixed(2)}'),
           const SizedBox(height: 8),
           Text('Disponibilidad para rango: $available disponibles'),
           const SizedBox(height: 12),

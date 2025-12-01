@@ -108,7 +108,17 @@ class _CartPageState extends State<CartPage> {
                           child: ListTile(
                             title: Text(e.item.name),
                             subtitle: Text('${e.start.toString().split(' ')[0]} → ${e.end.toString().split(' ')[0]} • ${e.qty} uds${e.pickup ? '' : ' • ${e.destDistanceKm?.toStringAsFixed(1) ?? '?'} km'}'),
-                            trailing: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('\$${(price + transportCost).toStringAsFixed(2)}')]),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Column(mainAxisAlignment: MainAxisAlignment.center, children: [Text('\$${(price + transportCost).toStringAsFixed(2)}')]),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => cart.remove(e.id),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

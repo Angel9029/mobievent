@@ -26,6 +26,10 @@ class _ReservationHistoryPageState extends State<ReservationHistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Historial de Reservas'),
         centerTitle: true,
       ),
