@@ -115,44 +115,62 @@ class _ReservationHistoryPageState extends State<ReservationHistoryPage> {
                     
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: ListTile(
-                        title: Text(title),
-                        subtitle: Text(
-                          '${res.start.toString().split(' ')[0]} - ${res.end.toString().split(' ')[0]}\n'
-                          'Cantidad: ${res.qty} | Estado: ${res.status}'
-                          '${res.daysCount != null ? ' | Días: ${res.daysCount}' : ''}'
-                          '${res.totalPrice != null ? ' | Total: \$${res.totalPrice!.toStringAsFixed(2)}' : ''}',
-                        ),
-                        trailing: isActive
-                            ? SizedBox(
-                                width: 200,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    if (canReschedule)
-                                      Flexible(
-                                        child: ElevatedButton(
-                                          onPressed: () => _showRescheduleModal(context, res, now),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue,
-                                          ),
-                                          child: const Text('Reprogramar'),
-                                        ),
-                                      ),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: ElevatedButton(
-                                        onPressed: () => _cancelReservation(context, res.id),
+                      child: Column(
+                        children: [
+                          ListTile(
+                            title: Text(title),
+                            subtitle: Text(
+                              '${res.start.toString().split(' ')[0]} - ${res.end.toString().split(' ')[0]}\n'
+                              'Cantidad: ${res.qty} | Estado: ${res.status}'
+                              '${res.daysCount != null ? ' | Días: ${res.daysCount}' : ''}'
+                              '${res.totalPrice != null ? ' | Total: \$${res.totalPrice!.toStringAsFixed(2)}' : ''}'
+                              '${isActive ? ' | Faltan: $daysUntilEnd días' : ''}',
+                            ),
+                          ),
+                          if (isActive)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  if (canReschedule)
+                                    Expanded(
+                                      child: ElevatedButton.icon(
+                                        onPressed: () => _showRescheduleModal(context, res, now),
+                                        icon: const Icon(Icons.date_range),
+                                        label: const Text('Reprogramar'),
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
+                                          backgroundColor: Colors.blue,
                                         ),
-                                        child: const Text('Cancelar'),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              )
-                            : null,
+                                  if (canReschedule)
+                                    const SizedBox(width: 8),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: () => _cancelReservation(context, res.id),
+                                      icon: const Icon(Icons.cancel),
+                                      label: const Text('Cancelar'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    ),
+                                  ),
+                                  if (!canReschedule)
+                                    Expanded(
+                                      child: Text(
+                                        'Reprogramación no disponible\n(menos de 7 días)',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     );
                   },

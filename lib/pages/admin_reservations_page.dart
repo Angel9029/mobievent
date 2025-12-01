@@ -49,24 +49,52 @@ class _AdminReservationsPageState extends State<AdminReservationsPage> {
                       Text('Vehículo: $vehicleDisplay', style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.blue)),
                     ],
                   ),
-                  trailing: PopupMenuButton<String>(onSelected: (v) async {
-                    if (v == 'cancel') {
-                      inv.cancelReservation(r.id);
-                      // simulate refund
-                      pay.reset();
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reserva cancelada y reembolso simulado')));
-                      }
-                    } else if (v == 'complete') {
-                      inv.updateReservationStatus(r.id, 'completed');
-                    } else if (v == 'assign') {
-                      _showVehicleAssignmentModal(context, inv, r.id);
-                    }
-                  }, itemBuilder: (_) => [
-                    const PopupMenuItem(value: 'assign', child: Text('Asignar vehículo')),
-                    const PopupMenuItem(value: 'cancel', child: Text('Cancelar')),
-                    const PopupMenuItem(value: 'complete', child: Text('Marcar completa')),
-                  ]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showVehicleAssignmentModal(context, inv, r.id),
+                          icon: const Icon(Icons.local_shipping),
+                          label: const Text('Asignar Vehículo'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            inv.cancelReservation(r.id);
+                            pay.reset();
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reserva cancelada y reembolso simulado')));
+                          },
+                          icon: const Icon(Icons.cancel),
+                          label: const Text('Cancelar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            inv.updateReservationStatus(r.id, 'completed');
+                          },
+                          icon: const Icon(Icons.check_circle),
+                          label: const Text('Completar'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
