@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "531668871116",
+    "project_id": "mobievent-1fb84",
+    "storage_bucket": "mobievent-1fb84.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:531668871116:android:6a3478eb4cf586eba29f69",
+        "android_client_info": {
+          "package_name": "com.example.mobievent"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDhKjH-O-a2YTep-sAAuu8gNfOEfsCIa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
